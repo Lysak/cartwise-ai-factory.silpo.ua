@@ -98,18 +98,39 @@ silpo_connections
 
 ### Token lifecycle
 
-Access token і refresh token зберігаються тільки на backend.
+Access token і refresh token зберігаються тільки на backend, у зашифрованому вигляді (`access_token_encrypted`, `refresh_token_encrypted`).
 
-Не робимо глобальний cron, який постійно refresh'ить усіх користувачів наперед.
+#### Шифрування токенів
 
-Краще використовувати lazy/on-demand refresh:
+- Алгоритм: **AES-256-GCM**.
+- Ключ шифрування — 32-байтовий secret, зберігається в ENV-змінній backend (наприклад `TOKEN_ENCRYPTION_KEY`), ніколи не потрапляє в репозиторій.
+- Для MVP хакатону — без managed KMS; ротація ключа виконується вручну.
+- Розшифровка відбувається тільки на backend безпосередньо перед MCP-запитом, розшифрований токен ніколи не повертається в API-відповіді фронтенду.
+
+#### Refresh стратегія
+
+Токени рефрешаться двома механізмами:
+
+1. **Proactive-refresh cron** — окрема періодична задача, яка вибирає `silpo_connections` зі `status = 'active'`, у яких `access_token_expires_at` настане найближчим часом (наприклад, протягом 15 хв), і рефрешить їх заздалегідь. Обробляються тільки активні з'єднання — неактивні (`reauth_required`) пропускаються, щоб не марнувати MCP/OAuth-виклики.
+2. **Defensive on-demand refresh** — safety net: якщо під час реального MCP-запиту access token виявився протухлим (proactive cron не встиг або впав), backend рефрешить його негайно перед запитом.
 
 ```text
-потрібен MCP-запит
+Cron: token-refresh (кожні N хв)
+        ↓
+SELECT active connections
+WHERE access_token_expires_at <= NOW() + interval '15 minutes'
+        ↓
+refresh token
+        ↓
+атомарно зберігаємо новий token set
+
+---
+
+MCP-запит (будь-який кейс)
         ↓
 access token ще валідний?
         ├─ так → використовуємо
-        └─ ні / скоро протухне
+        └─ ні (edge case, proactive cron не встиг)
              ↓
         refresh token
              ↓
@@ -357,11 +378,11 @@ price_changes
 
 ### Scheduler
 
-Система має працювати на маленькому instance без Redis та без обов'язкових окремих worker-сервісів.
+Scheduler для price-tracking залишається на Postgres (`FOR UPDATE SKIP LOCKED`), без job-queue (BullMQ тощо) та без обов'язкових окремих worker-сервісів. Redis у проєкті є (див. [9. Технологічний стек](#9-технологічний-стек)), але використовується тільки як cache-шар, а не як черга задач.
 
 NestJS scheduler запускається, наприклад, кожні 5–10 хвилин та вибирає тільки прострочені записи:
 
-```sql
+```text
 SELECT *
 FROM tracked_market_products
 WHERE status = 'active'
@@ -647,7 +668,7 @@ MCP не повинен бути жорстко прошитий у всю бі�
 
 Створюємо provider interface:
 
-```ts
+```text
 interface CommerceProvider {
   getProduct(...): Promise<Product>;
   getPrice(...): Promise<Price>;
@@ -755,13 +776,14 @@ AI переважно використовується під час research т
 ### Frontend
 
 ```text
-React
+React 19 (Vite SPA)
 TypeScript
 Mobile-first responsive UI
 Telegram Mini App support
+Vitest — тестування frontend
 ```
 
-React-застосунок використовується і в Telegram Mini App, і як звичайний mobile web.
+React-застосунок використовується і в Telegram Mini App, і як звичайний mobile web. Next.js свідомо не використовується: SSR/SEO не потрібні для авторизованого mini app, а окрема NestJS-структура (модулі, DI, guards, scheduler) вже продумана під backend і не переноситься в Next.js API routes.
 
 ### Backend
 
@@ -769,6 +791,7 @@ React-застосунок використовується і в Telegram Mini 
 NestJS
 TypeScript
 Node.js 24 LTS
+Jest — тестування backend (NestJS default)
 ```
 
 Архітектура:
@@ -804,7 +827,9 @@ src/
 ### Database
 
 ```text
-Aiven PostgreSQL 18
+PostgreSQL 18 — локально, у Docker (розробка)
+Aiven PostgreSQL 18 — production
+Prisma ORM
 ```
 
 MongoDB не потрібна.
@@ -818,6 +843,21 @@ PostgreSQL добре підходить для:
 - scheduler queue через `FOR UPDATE SKIP LOCKED`;
 - невеликого server instance.
 
+Prisma використовується як основний ORM/schema-migration інструмент. Для scheduler-запиту з `FOR UPDATE SKIP LOCKED` (Prisma не підтримує це нативно в query builder) використовується `$queryRaw`.
+
+### Cache
+
+```text
+Redis 8
+```
+
+Redis використовується виключно як cache-шар:
+
+- кешування MCP-відповідей (product details, каталог) з TTL — знижує навантаження на Silpo MCP та ризик rate limit;
+- rate-limit лічильники per-user для MCP-запитів.
+
+Redis **не** використовується як job queue (без BullMQ) і не замінює Postgres-based scheduler.
+
 ### Infrastructure
 
 Для MVP:
@@ -827,20 +867,32 @@ React
    ↓
 NestJS
    ↓
-Aiven PostgreSQL 18
+Aiven PostgreSQL 18 + Redis 8 (cache)
    ↓
 Silpo MCP
 ```
 
-Без Redis за замовчуванням.
-
-Без BullMQ за замовчуванням.
+Без BullMQ.
 
 Без Kafka.
 
 Без microservices.
 
 Система повинна запускатися на маленькому instance.
+
+### Local development
+
+Повна контейнеризація через Docker Compose — усі сервіси піднімаються локально однією командою:
+
+```text
+docker-compose.yml
+├── postgres   (PostgreSQL 18)
+├── redis      (Redis 8)
+├── backend    (NestJS, hot-reload через volume)
+└── frontend   (React/Vite, hot-reload через volume)
+```
+
+`Makefile` — обгортка над `docker compose` для типових команд розробки (підняти/зупинити оточення, дивитись логи, застосувати Prisma-міграції, засіяти тестові дані, прогнати тести). Точний список цілей `Makefile` фіксується під час bootstrap-етапу проєкту.
 
 ---
 
@@ -867,7 +919,7 @@ Score      Tracker         Optimizer
        CommerceProvider
               │
               ▼
-       SilpoMcpProvider
+       SilpoMcpProvider ◄──► Redis 8 (cache MCP-відповідей, rate-limit)
               │
               ▼
         Official Silpo MCP
