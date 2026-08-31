@@ -1,0 +1,56 @@
+:global(:root) {
+  --color-page: #f8fafc;
+  --color-background: var(--color-page);
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text: #1e293b;
+  --color-muted: #475569;
+  --color-primary: #2563eb;
+  --color-accent: #f97316;
+  --color-cta: var(--color-accent);
+  --radius-card: 12px;
+  --focus-ring: 0 0 0 3px rgb(37 99 235 / 35%);
+  --motion-standard: 200ms ease;
+}
+
+:global(*) {
+  box-sizing: border-box;
+}
+
+:global(body) {
+  min-width: 320px;
+  margin: 0;
+  background: var(--color-page);
+  color: var(--color-text);
+  font-family: Nunito Sans, sans-serif;
+}
+
+:global(:focus-visible) {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  box-shadow: var(--focus-ring);
+}
+
+:global(button),
+:global(a),
+:global(input),
+:global(select),
+:global(textarea) {
+  transition: color var(--motion-standard), background-color var(--motion-standard),
+    border-color var(--motion-standard), box-shadow var(--motion-standard), opacity var(--motion-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(*),
+  :global(*::before),
+  :global(*::after) {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+.root {
+  min-height: 100vh;
+}

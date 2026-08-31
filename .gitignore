@@ -1,2 +1,18 @@
 .idea
 .DS_Store
+.env
+
+# dependencies
+node_modules
+
+# build output
+dist
+*.tsbuildinfo
+reports/
+.stryker-tmp/
+
+# codebase-memory index cache
+.codebase-memory
+docs
+design-system
+.playwright-mcp

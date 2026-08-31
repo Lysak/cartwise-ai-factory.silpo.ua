@@ -1,0 +1,4 @@
+[mcp_servers.patchright]
+command = "/Users/Files/www/pet/cartwise-ai-factory.silpo.ua.git/scripts/ensure-patchright-mobile.sh"
+args = []
+env = { PLAYWRIGHT_MCP_HEADLESS = "false" }

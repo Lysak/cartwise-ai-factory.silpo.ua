@@ -1,0 +1,49 @@
+{
+  "name": "cartwise-backend",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "start:dev": "nest start --watch",
+    "build": "nest build",
+    "lint": "eslint \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "jest --runInBand",
+    "test:mutation": "stryker run",
+    "test:mutation:incremental": "stryker run --incremental",
+    "prisma:validate": "prisma validate"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "@nestjs/common": "12.0.1",
+    "@nestjs/config": "12.0.0",
+    "@nestjs/core": "12.0.1",
+    "@nestjs/platform-express": "12.0.1",
+    "@nestjs/schedule": "12.0.1",
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "cookie-parser": "^1.4.7",
+    "pg": "8.23.0",
+    "redis": "^6.2.1",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@nestjs/cli": "12.0.0",
+    "@nestjs/testing": "12.0.1",
+    "@stryker-mutator/core": "10.0.0",
+    "@stryker-mutator/jest-runner": "10.0.0",
+    "@stryker-mutator/typescript-checker": "10.0.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "5.0.6",
+    "@types/jest": "30.0.0",
+    "@types/node": "26.4.0",
+    "@types/pg": "8.23.1",
+    "eslint": "10.9.1",
+    "jest": "30.5.0",
+    "prisma": "7.10.0",
+    "ts-jest": "29.4.12",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.69.0"
+  }
+}

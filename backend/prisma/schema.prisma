@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model OAuthClient {
+  id                    String   @id @default(dbgenerated("uuidv7()"))
+  clientId              String   @unique
+  clientSecretEncrypted String?
+  redirectUri           String   @unique
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model OAuthState {
+  id                    String   @id @default(dbgenerated("uuidv7()"))
+  stateHash             String   @unique
+  verifierEncrypted     String
+  redirectUri           String
+  purpose               String   @default("telegram_first")
+  ownerUserId           String?
+  ownerUser             User?    @relation(fields: [ownerUserId], references: [id])
+  initiatingSessionHash String?
+  telegramUserId        String?
+  telegramUsername      String?
+  telegramFirstName     String?
+  telegramLastName      String?
+  telegramLanguageCode  String?
+  browserBindingHash    String?
+  expiresAt             DateTime
+  consumedAt            DateTime?
+  createdAt             DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model User {
+  id                   String  @id @default(dbgenerated("uuidv7()"))
+  telegramUserId       String? @unique
+  silpoExternalId      String? @unique
+  telegramUsername     String?
+  telegramFirstName    String?
+  telegramLastName     String?
+  telegramLanguageCode String?
+  preferredSilpoBranchId String?
+  silpoConnection      SilpoConnection?
+  oauthStates          OAuthState[]
+  priceSubscriptions   PriceSubscription[]
+  notificationEvents   NotificationEvent[]
+  telegramLinkTokens   TelegramLinkToken[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model TelegramLinkToken {
+  id         String    @id @default(dbgenerated("uuidv7()"))
+  tokenHash  String    @unique
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([expiresAt])
+}
+
+model SilpoConnection {
+  id                    String   @id @default(dbgenerated("uuidv7()"))
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+  accessTokenEncrypted  String
+  refreshTokenEncrypted String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  status                String   @default("active")
+  isTrackingService     Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([status, accessTokenExpiresAt])
+}
+
+model McpProbe {
+  id        String   @id @default(dbgenerated("uuidv7()"))
+  outcome   String
+  toolCount Int
+  toolCatalog Json
+  identityEvidence Json?
+  checkedAt DateTime @default(now())
+}
+
+model ProductAnalysis {
+  id               String   @id @default(dbgenerated("uuidv7()"))
+  slug             String
+  sourceHash       String
+  algorithmVersion String
+  score            Int?
+  confidence       String?
+  factors          Json
+  components       Json
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([slug, sourceHash, algorithmVersion])
+}
+
+model PriceTracker {
+  id                    String              @id @default(dbgenerated("uuidv7()"))
+  silpoExternalProductId String
+  slug                  String
+  name                  String
+  imageUrl              String?
+  silpoBranchId         String
+  status                String              @default("active")
+  currentPrice          Decimal?            @db.Decimal(12, 2)
+  lastCheckedAt         DateTime?
+  nextCheckAt           DateTime?
+  lastSuccessAt         DateTime?
+  failedAttempts        Int                 @default(0)
+  lastError             String?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  subscriptions         PriceSubscription[]
+  observations          PriceObservation[]
+  notificationEvents    NotificationEvent[]
+
+  @@unique([silpoExternalProductId, silpoBranchId])
+  @@index([status, nextCheckAt])
+}
+
+model PriceSubscription {
+  id             String       @id @default(dbgenerated("uuidv7()"))
+  userId         String
+  priceTrackerId String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  priceTracker   PriceTracker @relation(fields: [priceTrackerId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@unique([userId, priceTrackerId])
+  @@index([userId])
+}
+
+model PriceObservation {
+  id             String       @id @default(dbgenerated("uuidv7()"))
+  priceTrackerId String
+  price          Decimal      @db.Decimal(12, 2)
+  oldPrice       Decimal?     @db.Decimal(12, 2)
+  observedAt     DateTime     @default(now())
+  priceTracker   PriceTracker @relation(fields: [priceTrackerId], references: [id], onDelete: Cascade)
+
+  @@index([priceTrackerId, observedAt])
+}
+
+model NotificationEvent {
+  id             String       @id @default(dbgenerated("uuidv7()"))
+  userId         String
+  priceTrackerId String
+  type           String
+  payload        Json
+  createdAt      DateTime     @default(now())
+  readAt         DateTime?
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  priceTracker   PriceTracker @relation(fields: [priceTrackerId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+}

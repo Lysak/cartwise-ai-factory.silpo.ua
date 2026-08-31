@@ -1,0 +1,300 @@
+.main {
+  min-height: 100vh;
+  background: var(--color-page);
+}
+
+.container {
+  padding-block: 24px 48px;
+}
+
+.header {
+  width: 100%;
+  max-width: 960px;
+  box-sizing: border-box;
+  margin-inline: auto;
+  padding-inline: 16px;
+  margin-bottom: 24px;
+}
+
+.brandLink {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.screen {
+  width: 100%;
+  max-width: 960px;
+  box-sizing: border-box;
+  margin-inline: auto;
+  padding: 16px;
+}
+
+.searchForm {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  margin-block: 16px;
+}
+
+.searchForm > :first-child {
+  flex: 1;
+}
+
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  padding: 0;
+  margin-top: 20px;
+  list-style: none;
+}
+
+/* Mantine Stack rendered as <ul> keeps the browser's default list indent
+   (padding-inline-start: 40px) unless reset here, which sits list items
+   40px further right than sibling headings using the same .screen padding. */
+.itemList {
+  padding: 0;
+  list-style: none;
+}
+
+.productCard {
+  background: var(--color-surface);
+  min-width: 0;
+}
+
+.productCard :global(button) {
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  text-align: left;
+}
+
+.productCard :global(.mantine-Button-label) {
+  white-space: normal;
+}
+
+.heartButton {
+  min-height: 44px;
+  width: 100%;
+}
+
+.itemCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trackedImage,
+.imageFallback {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #f1f5f9;
+}
+
+.trackedImage :global(img) {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.imageFallback {
+  display: grid;
+  place-items: center;
+  color: var(--color-muted);
+  font-weight: 800;
+  font-size: 0.75rem;
+}
+
+.itemInfo {
+  min-width: 0;
+  flex: 1;
+}
+
+.itemActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.itemActions > button {
+  width: 100%;
+}
+
+.personalBenefitsButton {
+  width: 100%;
+}
+
+.priceBadge {
+  flex-shrink: 0;
+}
+
+.trackedPrice {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.detailCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-block: 16px;
+}
+
+.purchaseCard {
+  display: grid;
+  gap: 10px;
+  margin-block: 16px;
+  background: var(--color-surface);
+}
+
+.priceEvent,
+.historyRow {
+  display: grid;
+  gap: 6px;
+  background: var(--color-surface);
+}
+
+.eventProduct {
+  font-weight: 700;
+}
+
+.eventPrices {
+  min-height: 24px;
+}
+
+.scoreSummary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-block: 14px;
+}
+
+.scoreRing {
+  --score: 0;
+  display: grid;
+  place-content: center;
+  width: 78px;
+  height: 78px;
+  flex: 0 0 78px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color-surface) 58%, transparent 60%), conic-gradient(var(--color-primary) calc(var(--score) * 1%), #dbeafe 0);
+  color: var(--color-primary);
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+}
+
+.scoreRing span,
+.scoreRing small {
+  position: relative;
+  z-index: 1;
+}
+
+.scoreRing span {
+  display: block;
+  font-size: 1.25rem;
+}
+
+.scoreRing small {
+  color: var(--color-muted);
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.attributeGrid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 16px;
+  row-gap: 8px;
+  margin: 16px 0;
+}
+
+.attributeRow {
+  display: contents;
+}
+
+.attributeGrid dt {
+  color: var(--color-muted);
+}
+
+.attributeGrid dd {
+  margin: 0;
+  font-weight: 500;
+  text-align: right;
+}
+
+.branchPicker :global(input),
+.searchForm :global(input),
+.branchPicker :global(button),
+.searchForm :global(button) {
+  min-height: 44px;
+  height: 44px;
+}
+
+:global(button),
+:global(input) {
+  min-height: 44px;
+}
+
+@media (max-width: 520px) {
+  .container {
+    padding-inline: 0;
+  }
+
+  .header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .headerActions {
+    display: contents;
+  }
+
+  .headerActions :global(button:first-of-type) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+  }
+
+  .headerActions :global(button:last-of-type) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .searchForm {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .productGrid {
+    grid-template-columns: 1fr;
+  }
+}
