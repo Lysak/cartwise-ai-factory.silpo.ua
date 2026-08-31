@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model OAuthClient {
+  id                    String   @id @default(dbgenerated("uuidv7()"))
+  clientId              String   @unique
+  clientSecretEncrypted String?
+  redirectUri           String   @unique
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model OAuthState {
+  id                    String   @id @default(dbgenerated("uuidv7()"))
+  stateHash             String   @unique
+  verifierEncrypted     String
+  redirectUri           String
+  purpose               String   @default("telegram_first")
+  ownerUserId           String?
+  ownerUser             User?    @relation(fields: [ownerUserId], references: [id])
+  initiatingSessionHash String?
+  telegramUserId        String?
+  telegramUsername      String?
+  telegramFirstName     String?
+  telegramLastName      String?
+  telegramLanguageCode  String?
+  browserBindingHash    String?
+  expiresAt             DateTime
+  consumedAt            DateTime?
+  createdAt             DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model User {
+  id                   String  @id @default(dbgenerated("uuidv7()"))
+  telegramUserId       String? @unique
+  silpoExternalId      String? @unique
+  telegramUsername     String?
+  telegramFirstName    String?
+  telegramLastName     String?
+  telegramLanguageCode String?
+  silpoConnection      SilpoConnection?
+  oauthStates          OAuthState[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model SilpoConnection {
+  id                    String   @id @default(dbgenerated("uuidv7()"))
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+  accessTokenEncrypted  String
+  refreshTokenEncrypted String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  status                String   @default("active")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([status, accessTokenExpiresAt])
+}
+
+model McpProbe {
+  id        String   @id @default(dbgenerated("uuidv7()"))
+  outcome   String
+  toolCount Int
+  toolCatalog Json
+  identityEvidence Json?
+  checkedAt DateTime @default(now())
+}
